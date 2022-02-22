@@ -21,7 +21,9 @@ jobs:
     trigger: true
     passed: [configure-self]
   - set_pipeline: hello-world
-    file: ggrlab_concourse/pipelines/hello-world.yml  # testmessage
+    file: ggrlab_concourse/pipelines/hello-world.yml 
+  - set_pipeline: hello-world-2
+    file: ggrlab_concourse/pipelines/hello-world.yml 
 
 # fly -t ccc set-pipeline -p parent-pipelines -c pipelines/parent-pipelines.yml
 # fly -t ccc unpause-pipeline -p parent-pipelines
