@@ -1,0 +1,27 @@
+resources:
+- name: ggrlab_concourse
+  type: git
+  icon: github
+  source:
+    branch: main
+    uri: git@github.com:ggrlab/concourse.git
+
+jobs:
+- name: configure-self
+  plan:
+  - get: ggrlab_concourse
+    trigger: true
+  - set_pipeline: self
+    file: pipelines/parent-pipeline.yml
+
+- name: configure-pipelines
+  plan:
+  - get: ggrlab_concourse
+    trigger: true
+    passed: [configure-self]
+  - set_pipeline: hello-world
+    file: pipelines/hello-world.yml  # testmessage
+
+# fly -t ccc set-pipeline -p parent-pipelines -c pipelines/parent-pipelines.yml
+# fly -t ccc unpause-pipeline -p parent-pipelines
+# fly -t ccc trigger-job -j parent-pipelines/configure-pipelines --watch
