@@ -4,7 +4,8 @@ resources:
   icon: github
   source:
     branch: main
-    uri: git@github.com:ggrlab/concourse.git
+    uri: https://github.com/ggrlab/concourse
+    # uri: git@github.com:ggrlab/concourse.git
 
 jobs:
 - name: configure-self
@@ -25,3 +26,4 @@ jobs:
 # fly -t ccc set-pipeline -p parent-pipelines -c pipelines/parent-pipelines.yml
 # fly -t ccc unpause-pipeline -p parent-pipelines
 # fly -t ccc trigger-job -j parent-pipelines/configure-pipelines --watch
+# fly -t ccc check-resource --resource parent-pipelines/ggrlab_concourse
