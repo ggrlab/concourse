@@ -30,8 +30,8 @@ jobs:
         passed: [configure-self]
       - set_pipeline: hello-world
         file: ggrlab_concourse/pipelines/hello-world.yml
-      # - set_pipeline: hello-world-2
-      #   file: ggrlab_concourse/pipelines/hello-world.yml
+      - set_pipeline: hello-world-2
+        file: ggrlab_concourse/pipelines/hello-world.yml
 
 # - name: configure-pipelines
 #   plan:
