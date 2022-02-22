@@ -13,7 +13,7 @@ jobs:
   - get: ggrlab_concourse
     trigger: true
   - set_pipeline: self
-    file: pipelines/parent-pipeline.yml
+    file: ggrlab_concourse/pipelines/parent-pipeline.yml
 
 - name: configure-pipelines
   plan:
@@ -21,7 +21,7 @@ jobs:
     trigger: true
     passed: [configure-self]
   - set_pipeline: hello-world
-    file: pipelines/hello-world.yml  # testmessage
+    file: ggrlab_concourse/pipelines/hello-world.yml  # testmessage
 
 # fly -t ccc set-pipeline -p parent-pipelines -c pipelines/parent-pipelines.yml
 # fly -t ccc unpause-pipeline -p parent-pipelines
