@@ -20,8 +20,8 @@ jobs:
     plan:
     - get: ggrlab_concourse
       trigger: true
-    - set_pipeline: reconfigure-pipelines
-      file: ggrlab_concourse/pipelines/reconfigure-pipelines.yml
+    - set_pipeline: parent-pipelines
+      file: ggrlab_concourse/pipelines/parent-pipelines.yml
   - name: configure-pipelines
     public: true
     plan:
@@ -44,6 +44,9 @@ jobs:
 #     file: ggrlab_concourse/pipelines/hello-world.yml 
 
 # fly -t ccc destroy-pipeline -p parent-pipelines
+# fly -t ccc destroy-pipeline -p hello-world
+# fly -t ccc destroy-pipeline -p hello-world-2
+
 # fly -t ccc set-pipeline -p parent-pipelines -c pipelines/parent-pipelines.yml
 # fly -t ccc unpause-pipeline -p parent-pipelines
 # fly -t ccc trigger-job -j parent-pipelines/configure-pipelines --watch
