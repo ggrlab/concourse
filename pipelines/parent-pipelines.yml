@@ -15,13 +15,21 @@ resources:
 #   - set_pipeline: reconfigure-pipelines
 #     file: ggrlab_concourse/pipelines/parent-pipeline.yml
 
-- name: configure-pipelines
-  public: true
-  plan:
+jobs:
+  - name: configure-self
+    plan:
     - get: ggrlab_concourse
       trigger: true
-    - set_pipeline: hello-world
-      file: ggrlab_concourse/pipelines/hello-world.yml
+    - set_pipeline: reconfigure-pipelines
+      file: ggrlab_concourse/pipelines/reconfigure-pipelines.yml
+  - name: configure-pipelines
+    public: true
+    plan:
+      - get: ggrlab_concourse
+        trigger: true
+        passed: [configure-self]
+      - set_pipeline: hello-world
+        file: ggrlab_concourse/pipelines/hello-world.yml
 
 # - name: configure-pipelines
 #   plan:
@@ -33,6 +41,7 @@ resources:
 #   - set_pipeline: hello-world-2
 #     file: ggrlab_concourse/pipelines/hello-world.yml 
 
+# fly -t ccc destroy-pipeline -p parent-pipelines
 # fly -t ccc set-pipeline -p parent-pipelines -c pipelines/parent-pipelines.yml
 # fly -t ccc unpause-pipeline -p parent-pipelines
 # fly -t ccc trigger-job -j parent-pipelines/configure-pipelines --watch
