@@ -1,0 +1,126 @@
+resources:
+  # Where we will push the image
+  - name: ccc-docker-base
+    type: registry-image
+    icon: docker
+    source:
+      repository: ((docker-registry-name))/ccc_base
+      username: ((docker-registry-username))
+      password: ((docker-registry-password))
+      tag: latest
+  # - name: ccc-docker-gpu
+  #   type: registry-image
+  #   icon: docker
+  #   source:
+  #     repository: ((docker-registry-name))/ccc-gpu
+  #     username: ((docker-registry-username))
+  #     password: ((docker-registry-password))
+  # - name: ccc-docker-cpu
+  #   type: registry-image
+  #   icon: docker
+  #   source:
+  #     repository: ((docker-registry-name))/ccc-cpu
+  #     username: ((docker-registry-username))
+  #     password: ((docker-registry-password))
+
+  # The sourcecode 
+  - name: ccc-spanglab
+    type: git
+    icon: gitlab
+    source:
+      branch: master
+      uri: ssh://git@gitlab.spang-lab.de:222/glg58630/ccc.git
+      private_key_user: ((gitlab-spang_user))
+      private_key: ((gitlab-spang_private-key))
+
+      
+jobs:
+  - name: build-and-push_base-latest
+    plan:
+    - get: ccc-spanglab
+      trigger: true
+
+    - task: build-task-image
+      privileged: true
+      config:
+        platform: linux
+        image_resource:
+          type: registry-image
+          source:
+            repository: vito/oci-build-task
+        inputs:
+        - name: ccc-spanglab
+        outputs:
+        - name: image
+        params:
+          DOCKERFILE: ccc-spanglab/container/ccc_py38_new_baseimage.dockerfile
+        run:
+          path: sh
+          args:
+            - -exc
+            - |
+              # Copy the selected baseimage to "Dockerfile" in current directory
+              cp ccc-spanglab/container/ccc_py38_new_baseimage.dockerfile Dockerfile
+              # Create tmp directory (which will be used inside baseimage)
+              mkdir -p tmp
+              cp ccc-spanglab/pyproject.toml tmp/
+              build
+              # cat ccc-spanglab/.git/short_ref > image/additional-tags
+
+    - put: ccc-docker-base
+      params:
+        image: image/image.tar
+
+  - name: build-and-push_cpu-latest
+    plan:
+    - get: ccc-spanglab
+      trigger: true
+    - task: build-task-image
+      privileged: true
+      config:
+        platform: linux
+        image_resource:
+          type: registry-image
+          source:
+            repository: vito/oci-build-task
+        inputs:
+        - name: ccc-spanglab
+        outputs:
+        - name: image
+        params:
+          CONTEXT: "."
+          DOCKERFILE: ccc-spanglab/container/example.dockerfile
+        run:
+          path: sh
+          args:
+            - -exc
+            - |
+              build
+              cat code/.git/short_ref > image/additional-tags
+              mkdir -p tmp
+              cp ccc-spanglab/pyproject.toml tmp/
+    - put: ccc-docker-base
+      params:
+        image: image/image.tar
+        version: latest
+
+# jobs:
+# - name: build-nightly
+#   plan:
+#   - get: after-midnight
+#     trigger: true
+#   - task: something
+#     config: # ...
+
+
+# fly -t ccc login
+# fly -t ccc set-pipeline -p building_ccc -c pipelines/build_ccc.yml -l credentials.yml
+# fly -t ccc unpause-pipeline -p building_ccc
+# fly -t ccc trigger-job -j building_ccc/build-and-push_latest --watch
+# fly -t ccc check-resource --resource building_ccc/ccc-docker
+# fly -t ccc check-resource --resource building_ccc/ccc-spanglab
+
+# repository: registry.gunthergl.com/my-alpine
+# username: mnuVK0VxebRlpI4LLd0Z
+# password: k¬Lèp&H`9ë;ZÊV±Ç©)×¶qÕcÉüâë÷«2®h+°óJìÛûò
+# /home/gugl/clonedgit/ggrlab/concourse/pipelines/base_examples/build_containers.yml
