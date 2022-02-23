@@ -1,0 +1,120 @@
+resource_types:
+- name: git-tag
+  type: docker-image
+  source:
+    repository: sarquella/concourse-git-tag-resource
+
+resources:
+  # Where we will push the image
+  - name: example-docker
+    type: registry-image
+    icon: docker
+    source:
+      repository: ((image-repo-name))/example-docker
+      username: ((registry-username))
+      password: ((registry-password))
+
+  - name: ggrlab_concourse
+    type: git
+    icon: github
+    source:
+      branch: main
+      uri: https://github.com/ggrlab/concourse
+
+  - name: ggrlab_concourse-tagged
+    type: git-tag
+    icon: github
+    source:
+      uri: https://github.com/ggrlab/concourse
+      fetch_tags: true
+      
+jobs:
+  - name: build-and-push_latest-tag
+    plan:
+    - get: ggrlab_concourse-tagged
+      trigger: true
+    - task: get-tag
+      config:
+        platform: linux
+        image_resource:
+          type: registry-image
+          source:
+            repository: alpine/git
+        inputs:
+        - name: ggrlab_concourse-tagged
+        outputs:
+        - name: tag
+        run:
+          path: sh
+          args:
+            - -exc
+            - |
+              cd ggrlab_concourse-tagged; 
+              latest_tag=$(git describe --exact-match --abbrev=0);
+              cd ..;
+              echo $latest_tag > ./tag/latest_tag
+    - task: build-tagged-image
+      privileged: true
+      config:
+        platform: linux
+        image_resource:
+          type: registry-image
+          source:
+            repository: vito/oci-build-task
+        inputs:
+        - name: ggrlab_concourse-tagged
+        outputs:
+        - name: image
+        params:
+          DOCKERFILE: ggrlab_concourse-tagged/Dockerfiles/example.dockerfile
+        run:
+          path: build
+    - put: example-docker
+      params:
+        image: image/image.tar
+        bump_aliases: true
+        version: tag/latest_tag
+
+  - name: build-and-push_latest
+    plan:
+    - get: ggrlab_concourse
+      trigger: true
+    - task: build-task-image
+      privileged: true
+      config:
+        platform: linux
+        image_resource:
+          type: registry-image
+          source:
+            repository: vito/oci-build-task
+        inputs:
+        - name: ggrlab_concourse
+        outputs:
+        - name: image
+        params:
+          DOCKERFILE: ggrlab_concourse/Dockerfiles/example.dockerfile
+        run:
+          path: build
+    - put: example-docker
+      params:
+        image: image/image.tar
+        version: latest
+
+# jobs:
+# - name: build-nightly
+#   plan:
+#   - get: after-midnight
+#     trigger: true
+#   - task: something
+#     config: # ...
+
+
+# fly -t ccc set-pipeline -p build-and-push-image -c pipelines/base_examples/build_containers.yml --var image-repo-name=registry.gunthergl.com --var registry-username=mnuVK0VxebRlpI4LLd0Z --var registry-password='k¬Lèp&H`9ë;ZÊV±Ç©)×¶qÕcÉüâë÷«2®h+°óJìÛûò'
+# fly -t ccc unpause-pipeline -p build-and-push-image
+# fly -t ccc trigger-job -j build-and-push-image/build-and-push --watch
+
+
+# repository: registry.gunthergl.com/my-alpine
+# username: mnuVK0VxebRlpI4LLd0Z
+# password: k¬Lèp&H`9ë;ZÊV±Ç©)×¶qÕcÉüâë÷«2®h+°óJìÛûò
+# /home/gugl/clonedgit/ggrlab/concourse/pipelines/base_examples/build_containers.yml

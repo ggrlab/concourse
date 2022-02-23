@@ -1,0 +1,16 @@
+# https://github.com/concourse/time-resource
+resources:
+- name: after-midnight
+  type: time
+  source:
+    start: 12:00 AM
+    stop: 1:00 AM
+    location: Asia/Sakhalin
+
+jobs:
+- name: something-after-midnight
+  plan:
+  - get: after-midnight
+    trigger: true
+  - task: something
+    config: # ...
